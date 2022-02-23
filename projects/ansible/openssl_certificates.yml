@@ -1,0 +1,41 @@
+---
+- hosts: localhost
+  vars:
+    - server_hostname: computingforgeeks.com
+    - key_size: 4096
+    - passphrase: # Set if you want passphrase
+    - key_type: DSA # Others include DSA, ECC, Ed25519, Ed448, X25519, X448
+    - country_name: US
+    - email_address: admin@computingforgeeks.com
+    - organization_name: Computingforgeeks
+  tasks:
+    - name: Install Python Package Manager
+      apt:
+       pkg:
+       - python3-pip
+
+    - name: Install pyOpenSSL package
+      pip:
+        name: pyOpenSSL 
+
+
+    - name: Generate an OpenSSL private key
+      openssl_privatekey:
+        path: "./certificates/{{ server_hostname }}_privkey.pem"
+        size: "{{ key_size }}"
+        type: "{{ key_type }}"
+        backup: yes
+    - name: Generate an OpenSSL Certificate Signing Request with Subject information
+      openssl_csr:
+        path: "./certificates/{{ server_hostname }}.csr"
+        privatekey_path: "./certificates/{{ server_hostname }}_privkey.pem"
+        country_name: "{{ country_name }}"
+        organization_name: "{{ organization_name }}"
+        email_address: "{{ email_address }}"
+        common_name: "{{ server_hostname }}"
+    - name: Generate a Self Signed OpenSSL certificate
+      openssl_certificate:
+        path: "./certificates/{{ server_hostname }}_cert.pem"
+        privatekey_path: "./certificates/{{ server_hostname }}_privkey.pem"
+        csr_path: "./certificates/{{ server_hostname }}.csr"
+        provider: selfsigned
